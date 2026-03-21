@@ -130,12 +130,18 @@ exports.addQuestion = async (req, res) => {
     );
     const question = qRes.rows[0];
     if (options && options.length) {
-      for (const opt of options) {
-        await db.query(
-          "INSERT INTO quiz_options (question_id, option_text, is_correct) VALUES ($1,$2,$3)",
-          [question.id, opt.option_text, opt.is_correct || false],
-        );
-      }
+      const vals = options
+        .map((_, i) => `($1,$${i * 2 + 2},$${i * 2 + 3})`)
+        .join(",");
+      const params = [question.id];
+      options.forEach((opt) => {
+        params.push(opt.option_text);
+        params.push(opt.is_correct || false);
+      });
+      await db.query(
+        `INSERT INTO quiz_options (question_id, option_text, is_correct) VALUES ${vals}`,
+        params,
+      );
     }
     const full = await db.query(
       `SELECT qq.*, json_agg(json_build_object('id',qo.id,'option_text',qo.option_text,'is_correct',qo.is_correct)) AS options
@@ -160,10 +166,18 @@ exports.updateQuestion = async (req, res) => {
       await db.query("DELETE FROM quiz_options WHERE question_id=$1", [
         req.params.id,
       ]);
-      for (const opt of options) {
+      if (options.length) {
+        const vals = options
+          .map((_, i) => `($1,$${i * 2 + 2},$${i * 2 + 3})`)
+          .join(",");
+        const params = [req.params.id];
+        options.forEach((opt) => {
+          params.push(opt.option_text);
+          params.push(opt.is_correct || false);
+        });
         await db.query(
-          "INSERT INTO quiz_options (question_id, option_text, is_correct) VALUES ($1,$2,$3)",
-          [req.params.id, opt.option_text, opt.is_correct || false],
+          `INSERT INTO quiz_options (question_id, option_text, is_correct) VALUES ${vals}`,
+          params,
         );
       }
     }
@@ -192,19 +206,25 @@ exports.deleteQuestion = async (req, res) => {
 };
 
 exports.setRewards = async (req, res) => {
+  const client = await db.connect();
   try {
     const { rewards } = req.body;
-    await db.query("DELETE FROM quiz_rewards WHERE quiz_id=$1", [
+    await client.query("BEGIN");
+    await client.query("DELETE FROM quiz_rewards WHERE quiz_id=$1", [
       req.params.id,
     ]);
     for (const r of rewards) {
-      await db.query(
+      await client.query(
         "INSERT INTO quiz_rewards (quiz_id, attempt_number, points) VALUES ($1,$2,$3)",
         [req.params.id, r.attempt_number, r.points],
       );
     }
+    await client.query("COMMIT");
     res.json({ message: "Rewards saved" });
   } catch (err) {
+    await client.query("ROLLBACK");
     res.status(500).json({ error: "Failed to set rewards" });
+  } finally {
+    client.release();
   }
 };

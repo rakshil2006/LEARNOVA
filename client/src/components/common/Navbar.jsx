@@ -76,19 +76,7 @@ export default function Navbar({ variant = "public" }) {
               className="btn btn-secondary btn-sm"
               onClick={() => setMenuOpen(!menuOpen)}
               style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span
-                style={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: "50%",
-                  background: "var(--o-primary)",
-                  color: "#fff",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "0.786rem",
-                  fontWeight: 700,
-                }}>
+              <span className="o-avatar-initials">
                 {getInitials(user.name)}
               </span>
               {user.name.split(" ")[0]}

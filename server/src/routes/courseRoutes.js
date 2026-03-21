@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const c = require("../controllers/courseController");
+const courseController = require("../controllers/courseController");
 const {
   authMiddleware,
   optionalAuth,
@@ -8,79 +8,87 @@ const roleMiddleware = require("../middleware/roleMiddleware");
 const upload = require("../config/multer");
 
 // Public routes
-router.get("/public/courses", optionalAuth, c.getPublicCourses);
-router.get("/public/courses/:id", optionalAuth, c.getPublicCourse);
-router.post("/public/courses/:id/enroll", authMiddleware, c.enrollCourse);
-router.post("/public/courses/:id/view", c.incrementView);
-router.get("/public/stats", c.getPublicStats);
+router.get("/public/courses", optionalAuth, courseController.getPublicCourses);
+router.get(
+  "/public/courses/:id",
+  optionalAuth,
+  courseController.getPublicCourse,
+);
+router.post(
+  "/public/courses/:id/enroll",
+  authMiddleware,
+  courseController.enrollCourse,
+);
+router.post("/public/courses/:id/view", courseController.incrementView);
+router.get("/public/stats", courseController.getPublicStats);
 
 // Admin/Instructor routes
 router.get(
   "/courses",
   authMiddleware,
   roleMiddleware("admin", "instructor"),
-  c.getCourses,
+  courseController.getCourses,
 );
 router.post(
   "/courses",
   authMiddleware,
   roleMiddleware("admin", "instructor"),
-  c.createCourse,
+  courseController.createCourse,
 );
 router.get(
   "/courses/:id",
   authMiddleware,
   roleMiddleware("admin", "instructor"),
-  c.getCourse,
+  courseController.getCourse,
 );
 router.put(
   "/courses/:id",
   authMiddleware,
   roleMiddleware("admin", "instructor"),
-  c.updateCourse,
+  courseController.updateCourse,
 );
 router.delete(
   "/courses/:id",
   authMiddleware,
   roleMiddleware("admin", "instructor"),
-  c.deleteCourse,
+  courseController.deleteCourse,
 );
 router.patch(
   "/courses/:id/publish",
   authMiddleware,
   roleMiddleware("admin", "instructor"),
-  c.publishCourse,
+  courseController.publishCourse,
 );
 router.post(
   "/courses/:id/cover",
   authMiddleware,
   roleMiddleware("admin", "instructor"),
   upload.single("cover"),
-  c.uploadCover,
+  courseController.uploadCover,
 );
 router.get(
   "/courses/:id/share-link",
   authMiddleware,
   roleMiddleware("admin", "instructor"),
-  c.getShareLink,
+  courseController.getShareLink,
 );
 router.post(
   "/courses/:id/attendees",
   authMiddleware,
   roleMiddleware("admin", "instructor"),
-  c.addAttendees,
+  courseController.addAttendees,
 );
 router.get(
   "/courses/:id/attendees",
   authMiddleware,
   roleMiddleware("admin", "instructor"),
-  c.getAttendees,
+  courseController.getAttendees,
 );
 router.post(
   "/courses/:id/contact",
   authMiddleware,
   roleMiddleware("admin", "instructor"),
-  c.contactAttendees,
+  courseController.contactAttendees,
 );
 
 module.exports = router;

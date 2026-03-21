@@ -28,3 +28,12 @@ export function getInitials(name) {
     .toUpperCase()
     .slice(0, 2);
 }
+
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL?.replace("/api", "") ||
+  "http://localhost:5000";
+
+export function resolveMediaUrl(url) {
+  if (!url) return null;
+  return url.startsWith("http") ? url : `${API_BASE}${url}`;
+}

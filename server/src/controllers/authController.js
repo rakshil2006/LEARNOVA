@@ -20,7 +20,7 @@ const generateTokens = (user) => {
 
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password } = req.body; // role is always 'learner' on self-register
     const existing = await db.query("SELECT id FROM users WHERE email=$1", [
       email,
     ]);

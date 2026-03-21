@@ -5,6 +5,7 @@ import ProgressBar from "../../components/common/ProgressBar";
 import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../hooks/useToast";
 import { useDebounce } from "../../hooks/useDebounce";
+import { useRecommendations } from "../../hooks/useRecommendations";
 import { getPublicCourses, purchaseCourse } from "../../api/courseApi";
 import { formatDuration, getInitials } from "../../utils/formatters";
 import { getBadge, getNextBadge } from "../../utils/constants";
@@ -222,6 +223,120 @@ function ProfilePanel({ user }) {
   );
 }
 
+function RecommendationsSection() {
+  const navigate = useNavigate();
+  const { recommendations, loading } = useRecommendations();
+
+  if (loading || recommendations.length === 0) return null;
+
+  return (
+    <div style={{ marginTop: 32 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          borderBottom: "1px solid var(--o-border)",
+          paddingBottom: 12,
+          marginBottom: 16,
+        }}>
+        <span
+          style={{
+            fontSize: "1.143rem",
+            fontWeight: 500,
+            color: "var(--o-text-primary)",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}>
+          <i className="fas fa-brain" style={{ color: "var(--o-danger)" }} />
+          Practice These Topics
+        </span>
+        <span
+          style={{ fontSize: "0.857rem", color: "var(--o-text-secondary)" }}>
+          Based on your quiz performance
+        </span>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gap: 16,
+        }}
+        className="recommendations-grid">
+        {recommendations.map((r) => (
+          <div
+            key={r.quiz_id}
+            style={{
+              background: "var(--o-bg-view)",
+              border: "1px solid var(--o-border)",
+              borderLeft: "4px solid var(--o-danger)",
+              borderRadius: "var(--o-radius)",
+              padding: 16,
+              boxShadow: "var(--o-shadow-sm)",
+            }}>
+            <div
+              style={{
+                fontWeight: 500,
+                color: "var(--o-text-primary)",
+                fontSize: "1rem",
+              }}>
+              {r.quiz_title}
+            </div>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                color: "var(--o-text-secondary)",
+                fontSize: "0.857rem",
+                marginTop: 4,
+              }}>
+              <i className="fas fa-book-open" />
+              {r.course_title}
+            </div>
+            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+              <span
+                style={{
+                  background: "var(--o-warning-light)",
+                  color: "#856404",
+                  borderRadius: 20,
+                  padding: "2px 8px",
+                  fontSize: "0.857rem",
+                }}>
+                Attempted {r.total_attempts}x
+              </span>
+              <span
+                style={{
+                  background:
+                    parseFloat(r.avg_score_pct) < 60
+                      ? "var(--o-danger-light)"
+                      : "var(--o-warning-light)",
+                  color:
+                    parseFloat(r.avg_score_pct) < 60
+                      ? "var(--o-danger)"
+                      : "#856404",
+                  borderRadius: 20,
+                  padding: "2px 8px",
+                  fontSize: "0.857rem",
+                }}>
+                {parseFloat(r.avg_score_pct).toFixed(0)}% avg
+              </span>
+            </div>
+            <button
+              className="btn btn-primary btn-sm w-full"
+              style={{ marginTop: 12, justifyContent: "center" }}
+              onClick={() => navigate(r.player_url)}>
+              Practice Now →
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function CoursesPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -354,6 +469,8 @@ export default function CoursesPage() {
                 ))}
               </div>
             )}
+
+            {user?.role === "learner" && <RecommendationsSection />}
           </div>
 
           {user?.role === "learner" && <ProfilePanel user={user} />}

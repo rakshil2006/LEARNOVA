@@ -65,53 +65,16 @@ export default function SignupPage() {
   });
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "var(--o-bg-body)",
-        padding: 16,
-      }}>
-      <div
-        style={{
-          background: "#fff",
-          border: "1px solid var(--o-border)",
-          borderRadius: "var(--o-radius-lg)",
-          padding: 40,
-          width: "100%",
-          maxWidth: 460,
-          boxShadow: "var(--o-shadow-md)",
-        }}>
-        <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <div
-            style={{
-              fontSize: "1.714rem",
-              fontWeight: 700,
-              color: "var(--o-primary)",
-              marginBottom: 4,
-            }}>
+    <div className="auth-page">
+      <div className="auth-card auth-card-wide">
+        <div className="auth-header">
+          <div className="auth-logo">
             <i className="fas fa-graduation-cap" /> Learnova
           </div>
-          <p style={{ color: "var(--o-text-secondary)" }}>
-            Create your free account
-          </p>
+          <p className="auth-subtitle">Create your free account</p>
         </div>
 
-        {apiError && (
-          <div
-            style={{
-              background: "var(--o-danger-light)",
-              color: "var(--o-danger)",
-              padding: "8px 12px",
-              borderRadius: "var(--o-radius-sm)",
-              marginBottom: 16,
-              fontSize: "0.929rem",
-            }}>
-            {apiError}
-          </div>
-        )}
+        {apiError && <div className="auth-error">{apiError}</div>}
 
         <form onSubmit={handleSubmit} noValidate>
           <div className="form-group">
@@ -209,13 +172,7 @@ export default function SignupPage() {
           </button>
         </form>
 
-        <p
-          style={{
-            textAlign: "center",
-            marginTop: 20,
-            fontSize: "0.929rem",
-            color: "var(--o-text-secondary)",
-          }}>
+        <p className="auth-footer">
           Already have an account? <Link to="/login">Log in</Link>
         </p>
       </div>

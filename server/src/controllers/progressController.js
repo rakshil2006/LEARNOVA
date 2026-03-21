@@ -211,6 +211,71 @@ exports.submitQuizAttempt = async (req, res) => {
     );
     const totalPoints = userRes.rows[0].total_points;
 
+    // ── Smart Practice Recommendation: upsert weak area (non-blocking) ──
+    try {
+      // Step 1: score for this attempt
+      const totalQRes = await db.query(
+        "SELECT COUNT(*) AS cnt FROM quiz_questions WHERE quiz_id=$1",
+        [quizId],
+      );
+      const totalQuestions = parseInt(totalQRes.rows[0].cnt) || 0;
+
+      let scorePct = 0;
+      if (totalQuestions > 0) {
+        const correctRes = await db.query(
+          `SELECT COUNT(*) AS cnt
+           FROM quiz_attempt_answers qaa
+           JOIN quiz_options qo ON qo.id = qaa.selected_option_id
+           WHERE qaa.attempt_id = $1 AND qo.is_correct = TRUE`,
+          [attempt.id],
+        );
+        const correctCount = parseInt(correctRes.rows[0].cnt) || 0;
+        scorePct = Math.round((correctCount / totalQuestions) * 100);
+      }
+
+      // Step 2: avg across all attempts for this user+quiz
+      const allAttemptsRes = await db.query(
+        "SELECT COUNT(*) AS cnt FROM quiz_attempts WHERE user_id=$1 AND quiz_id=$2",
+        [userId, quizId],
+      );
+      const totalAttempts = parseInt(allAttemptsRes.rows[0].cnt) || 1;
+
+      const prevAvgRes = await db.query(
+        "SELECT avg_score_pct FROM quiz_weak_areas WHERE user_id=$1 AND quiz_id=$2",
+        [userId, quizId],
+      );
+      let avgScorePct;
+      if (prevAvgRes.rows.length) {
+        const prevAvg = parseFloat(prevAvgRes.rows[0].avg_score_pct) || 0;
+        const prevCount = totalAttempts - 1;
+        avgScorePct =
+          prevCount > 0
+            ? (prevAvg * prevCount + scorePct) / totalAttempts
+            : scorePct;
+      } else {
+        avgScorePct = scorePct;
+      }
+      avgScorePct = Math.round(avgScorePct * 100) / 100;
+
+      // Step 3: is_weak
+      const isWeak = totalAttempts >= 2 || avgScorePct < 60;
+
+      // Step 4: upsert
+      await db.query(
+        `INSERT INTO quiz_weak_areas (user_id, quiz_id, course_id, total_attempts, avg_score_pct, last_attempted, is_weak)
+         VALUES ($1, $2, $3, $4, $5, NOW(), $6)
+         ON CONFLICT (user_id, quiz_id) DO UPDATE SET
+           total_attempts = EXCLUDED.total_attempts,
+           avg_score_pct  = EXCLUDED.avg_score_pct,
+           last_attempted = NOW(),
+           is_weak        = EXCLUDED.is_weak`,
+        [userId, quizId, cId, totalAttempts, avgScorePct, isWeak],
+      );
+    } catch (weakErr) {
+      console.error("Weak area upsert failed (non-fatal):", weakErr.message);
+    }
+    // ── end weak area ──
+
     res.json({
       attempt_number: newAttemptNumber,
       points_earned: pointsEarned,

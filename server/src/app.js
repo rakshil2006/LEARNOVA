@@ -38,6 +38,7 @@ app.use("/api/reporting", require("./routes/reportRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/courses/:courseId/reviews", require("./routes/reviewRoutes"));
 app.use("/api/courses/:courseId/purchase", require("./routes/purchaseRoutes"));
+app.use("/api/learner", require("./routes/recommendationRoutes"));
 
 app.use(errorHandler);
 

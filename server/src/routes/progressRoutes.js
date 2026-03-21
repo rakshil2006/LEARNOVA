@@ -1,10 +1,26 @@
 const router = require("express").Router();
-const pc = require("../controllers/progressController");
+const progressController = require("../controllers/progressController");
 const { authMiddleware } = require("../middleware/authMiddleware");
 
-router.patch("/lessons/:lessonId", authMiddleware, pc.updateLessonProgress);
-router.post("/quizzes/:quizId/attempt", authMiddleware, pc.submitQuizAttempt);
-router.get("/courses/:courseId", authMiddleware, pc.getCourseProgress);
-router.patch("/courses/:courseId/complete", authMiddleware, pc.completeCourse);
+router.patch(
+  "/lessons/:lessonId",
+  authMiddleware,
+  progressController.updateLessonProgress,
+);
+router.post(
+  "/quizzes/:quizId/attempt",
+  authMiddleware,
+  progressController.submitQuizAttempt,
+);
+router.get(
+  "/courses/:courseId",
+  authMiddleware,
+  progressController.getCourseProgress,
+);
+router.patch(
+  "/courses/:courseId/complete",
+  authMiddleware,
+  progressController.completeCourse,
+);
 
 module.exports = router;

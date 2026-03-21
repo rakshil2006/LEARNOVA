@@ -1,5 +1,4 @@
 const db = require("../config/db");
-const path = require("path");
 
 const courseSelect = `
   SELECT c.*,
@@ -185,7 +184,8 @@ exports.uploadCover = async (req, res) => {
 };
 
 exports.getShareLink = async (req, res) => {
-  res.json({ url: `http://localhost:5174/courses/${req.params.id}` });
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5174";
+  res.json({ url: `${frontendUrl}/courses/${req.params.id}` });
 };
 
 exports.addAttendees = async (req, res) => {
@@ -193,25 +193,31 @@ exports.addAttendees = async (req, res) => {
     const { emails } = req.body;
     if (!emails || !Array.isArray(emails))
       return res.status(400).json({ error: "emails array required" });
+
+    const trimmed = emails.map((e) => e.trim()).filter(Boolean);
+    const userRes = await db.query(
+      "SELECT id, email FROM users WHERE email = ANY($1::text[])",
+      [trimmed],
+    );
+    const foundMap = {};
+    userRes.rows.forEach((u) => (foundMap[u.email] = u.id));
+
     const enrolled = [];
     const skipped = [];
-    for (const email of emails) {
-      const userRes = await db.query("SELECT id FROM users WHERE email=$1", [
-        email.trim(),
-      ]);
-      if (!userRes.rows.length) {
+    for (const email of trimmed) {
+      if (!foundMap[email]) {
         skipped.push(email);
         continue;
       }
-      const userId = userRes.rows[0].id;
       await db.query(
         `INSERT INTO enrollments (user_id, course_id, status) VALUES ($1,$2,'yet_to_start') ON CONFLICT DO NOTHING`,
-        [userId, req.params.id],
+        [foundMap[email], req.params.id],
       );
       enrolled.push(email);
     }
     res.json({ enrolled, skipped });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "Failed to add attendees" });
   }
 };
@@ -411,6 +417,8 @@ exports.getPublicCourse = async (req, res) => {
   }
 };
 
+const db = require("../config/db");
+
 exports.enrollCourse = async (req, res) => {
   try {
     const courseRes = await db.query("SELECT * FROM courses WHERE id=$1", [
@@ -423,6 +431,17 @@ exports.enrollCourse = async (req, res) => {
       return res
         .status(403)
         .json({ error: "Please purchase this course to enroll" });
+    }
+    if (course.access_rule === "invitation") {
+      const check = await db.query(
+        "SELECT id FROM enrollments WHERE user_id=$1 AND course_id=$2",
+        [req.user.id, req.params.id],
+      );
+      if (!check.rows.length)
+        return res
+          .status(403)
+          .json({ error: "This course is by invitation only" });
+      return res.json({ message: "Already enrolled" });
     }
     await db.query(
       `INSERT INTO enrollments (user_id, course_id, status) VALUES ($1,$2,'yet_to_start') ON CONFLICT DO NOTHING`,

@@ -27,6 +27,28 @@ function StatusBadge({ status }) {
   return <span className={`badge badge-${type}`}>{label}</span>;
 }
 
+const STAT_CARD_DEFS = [
+  { key: "", label: "Total", icon: "fa-users", color: "var(--o-primary)" },
+  {
+    key: "yet_to_start",
+    label: "Yet to Start",
+    icon: "fa-clock",
+    color: "var(--o-gray-600)",
+  },
+  {
+    key: "in_progress",
+    label: "In Progress",
+    icon: "fa-spinner",
+    color: "var(--o-info)",
+  },
+  {
+    key: "completed",
+    label: "Completed",
+    icon: "fa-check-circle",
+    color: "var(--o-success)",
+  },
+];
+
 export default function ReportingPage() {
   const toast = useToast();
   const [data, setData] = useState([]);
@@ -84,36 +106,10 @@ export default function ReportingPage() {
     return sortDir === "asc" ? cmp : -cmp;
   });
 
-  const statCards = [
-    {
-      key: "",
-      label: "Total",
-      value: stats.total,
-      icon: "fa-users",
-      color: "var(--o-primary)",
-    },
-    {
-      key: "yet_to_start",
-      label: "Yet to Start",
-      value: stats.yet_to_start,
-      icon: "fa-clock",
-      color: "var(--o-gray-600)",
-    },
-    {
-      key: "in_progress",
-      label: "In Progress",
-      value: stats.in_progress,
-      icon: "fa-spinner",
-      color: "var(--o-info)",
-    },
-    {
-      key: "completed",
-      label: "Completed",
-      value: stats.completed,
-      icon: "fa-check-circle",
-      color: "var(--o-success)",
-    },
-  ];
+  const statCards = STAT_CARD_DEFS.map((s) => ({
+    ...s,
+    value: s.key === "" ? stats.total : stats[s.key],
+  }));
 
   return (
     <div>

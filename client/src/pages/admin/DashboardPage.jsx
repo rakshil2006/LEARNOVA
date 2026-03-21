@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/common/Navbar";
 import Modal from "../../components/common/Modal";
@@ -13,7 +13,11 @@ import {
   publishCourse,
   getShareLink,
 } from "../../api/courseApi";
-import { formatDuration, formatDate } from "../../utils/formatters";
+import {
+  formatDuration,
+  formatDate,
+  resolveMediaUrl,
+} from "../../utils/formatters";
 
 function CourseStatusBadge({ published }) {
   return published ? (
@@ -25,6 +29,53 @@ function CourseStatusBadge({ published }) {
     <span className="badge badge-muted">Draft</span>
   );
 }
+
+const CourseActions = memo(function CourseActions({
+  course,
+  openMenu,
+  setOpenMenu,
+  onEdit,
+  onShare,
+  onDelete,
+}) {
+  return (
+    <div className="dropdown" style={{ position: "relative" }}>
+      <button
+        className="btn-icon"
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpenMenu(openMenu === course.id ? null : course.id);
+        }}
+        aria-label="Actions">
+        <i className="fas fa-ellipsis-v" />
+      </button>
+      {openMenu === course.id && (
+        <div className="dropdown-menu" onClick={(e) => e.stopPropagation()}>
+          <button
+            className="dropdown-item"
+            onClick={() => {
+              onEdit(course.id);
+              setOpenMenu(null);
+            }}>
+            <i className="fas fa-pencil" /> Edit
+          </button>
+          <button className="dropdown-item" onClick={() => onShare(course.id)}>
+            <i className="fas fa-share-alt" /> Share
+          </button>
+          <hr className="dropdown-divider" />
+          <button
+            className="dropdown-item danger"
+            onClick={() => {
+              onDelete(course);
+              setOpenMenu(null);
+            }}>
+            <i className="fas fa-trash" /> Delete
+          </button>
+        </div>
+      )}
+    </div>
+  );
+});
 
 function SkeletonCard() {
   return (
@@ -124,46 +175,6 @@ export default function DashboardPage() {
 
   const draft = courses.filter((c) => !c.is_published);
   const published = courses.filter((c) => c.is_published);
-
-  const CourseActions = ({ course }) => (
-    <div className="dropdown" style={{ position: "relative" }}>
-      <button
-        className="btn-icon"
-        onClick={(e) => {
-          e.stopPropagation();
-          setOpenMenu(openMenu === course.id ? null : course.id);
-        }}
-        aria-label="Actions">
-        <i className="fas fa-ellipsis-v" />
-      </button>
-      {openMenu === course.id && (
-        <div className="dropdown-menu" onClick={(e) => e.stopPropagation()}>
-          <button
-            className="dropdown-item"
-            onClick={() => {
-              navigate(`/admin/courses/${course.id}/edit`);
-              setOpenMenu(null);
-            }}>
-            <i className="fas fa-pencil" /> Edit
-          </button>
-          <button
-            className="dropdown-item"
-            onClick={() => handleShare(course.id)}>
-            <i className="fas fa-share-alt" /> Share
-          </button>
-          <hr className="dropdown-divider" />
-          <button
-            className="dropdown-item danger"
-            onClick={() => {
-              setDeleteTarget(course);
-              setOpenMenu(null);
-            }}>
-            <i className="fas fa-trash" /> Delete
-          </button>
-        </div>
-      )}
-    </div>
-  );
 
   return (
     <div onClick={() => setOpenMenu(null)}>
@@ -286,15 +297,18 @@ export default function DashboardPage() {
                           marginBottom: 8,
                         }}>
                         <CourseStatusBadge published={c.is_published} />
-                        <CourseActions course={c} />
+                        <CourseActions
+                          course={c}
+                          openMenu={openMenu}
+                          setOpenMenu={setOpenMenu}
+                          onEdit={(id) => navigate(`/admin/courses/${id}/edit`)}
+                          onShare={handleShare}
+                          onDelete={setDeleteTarget}
+                        />
                       </div>
                       {c.cover_image_url ? (
                         <img
-                          src={
-                            c.cover_image_url.startsWith("http")
-                              ? c.cover_image_url
-                              : `http://localhost:5000${c.cover_image_url}`
-                          }
+                          src={resolveMediaUrl(c.cover_image_url)}
                           alt={c.title}
                           style={{
                             width: "100%",
@@ -396,11 +410,7 @@ export default function DashboardPage() {
                     <td>
                       {c.cover_image_url ? (
                         <img
-                          src={
-                            c.cover_image_url.startsWith("http")
-                              ? c.cover_image_url
-                              : `http://localhost:5000${c.cover_image_url}`
-                          }
+                          src={resolveMediaUrl(c.cover_image_url)}
                           alt=""
                           style={{
                             width: 48,
@@ -449,7 +459,14 @@ export default function DashboardPage() {
                       <CourseStatusBadge published={c.is_published} />
                     </td>
                     <td onClick={(e) => e.stopPropagation()}>
-                      <CourseActions course={c} />
+                      <CourseActions
+                        course={c}
+                        openMenu={openMenu}
+                        setOpenMenu={setOpenMenu}
+                        onEdit={(id) => navigate(`/admin/courses/${id}/edit`)}
+                        onShare={handleShare}
+                        onDelete={setDeleteTarget}
+                      />
                     </td>
                   </tr>
                 ))}
