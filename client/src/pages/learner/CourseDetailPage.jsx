@@ -477,7 +477,7 @@ export default function CourseDetailPage() {
                   </span>
                 )}
               </div>
-              {user && course.enrollment && (
+              {user && (
                 <button
                   className="btn btn-primary btn-sm"
                   onClick={() => setReviewModal(true)}>

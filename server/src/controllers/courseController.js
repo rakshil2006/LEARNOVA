@@ -101,19 +101,21 @@ exports.updateCourse = async (req, res) => {
         title=COALESCE($1,title), tags=COALESCE($2,tags), website_slug=COALESCE($3,website_slug),
         short_description=COALESCE($4,short_description), description=COALESCE($5,description),
         visibility=COALESCE($6,visibility), access_rule=COALESCE($7,access_rule),
-        price=COALESCE($8,price), course_admin_id=COALESCE($9,course_admin_id),
+        price=COALESCE($8::numeric,price), course_admin_id=COALESCE($9::integer,course_admin_id),
         updated_at=NOW()
       WHERE id=$10 RETURNING *`,
       [
-        title,
-        tags,
-        website_slug,
-        short_description,
-        description,
-        visibility,
-        access_rule,
-        price,
-        course_admin_id,
+        title || null,
+        tags || null,
+        website_slug || null,
+        short_description || null,
+        description || null,
+        visibility || null,
+        access_rule || null,
+        price != null && price !== "" ? price : null,
+        course_admin_id != null && course_admin_id !== ""
+          ? course_admin_id
+          : null,
         id,
       ],
     );

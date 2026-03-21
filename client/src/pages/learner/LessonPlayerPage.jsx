@@ -349,6 +349,8 @@ export default function LessonPlayerPage() {
   const timeRef = useRef(0);
   const intervalRef = useRef(null);
 
+  const progressRef = useRef({});
+
   const load = useCallback(async () => {
     try {
       const res = await getPublicCourse(courseId);
@@ -359,6 +361,7 @@ export default function LessonPlayerPage() {
       ls.forEach((l) => {
         lp[l.id] = l.progress_status || "not_started";
       });
+      progressRef.current = lp;
       setProgress(lp);
       const completed = ls.filter((l) => lp[l.id] === "completed").length;
       setCompletionPct(
@@ -382,12 +385,17 @@ export default function LessonPlayerPage() {
 
     // Mark in_progress for video, auto-complete for doc/image
     const markProgress = async () => {
+      const currentStatus = progressRef.current[currentLesson.id];
       if (currentLesson.type === "video") {
-        if (progress[currentLesson.id] !== "completed") {
+        if (currentStatus !== "completed") {
           await updateLessonProgress(currentLesson.id, {
             status: "in_progress",
             courseId,
           }).catch(() => {});
+          progressRef.current = {
+            ...progressRef.current,
+            [currentLesson.id]: "in_progress",
+          };
           setProgress((prev) => ({
             ...prev,
             [currentLesson.id]: "in_progress",
@@ -397,11 +405,15 @@ export default function LessonPlayerPage() {
         currentLesson.type === "document" ||
         currentLesson.type === "image"
       ) {
-        if (progress[currentLesson.id] !== "completed") {
+        if (currentStatus !== "completed") {
           const res = await updateLessonProgress(currentLesson.id, {
             status: "completed",
             courseId,
           }).catch(() => null);
+          progressRef.current = {
+            ...progressRef.current,
+            [currentLesson.id]: "completed",
+          };
           setProgress((prev) => ({ ...prev, [currentLesson.id]: "completed" }));
           if (res?.data?.completion_percent !== undefined)
             setCompletionPct(res.data.completion_percent);
@@ -436,6 +448,10 @@ export default function LessonPlayerPage() {
         status: "completed",
         courseId,
       });
+      progressRef.current = {
+        ...progressRef.current,
+        [currentLesson.id]: "completed",
+      };
       setProgress((prev) => ({ ...prev, [currentLesson.id]: "completed" }));
       if (res.data.completion_percent !== undefined)
         setCompletionPct(res.data.completion_percent);

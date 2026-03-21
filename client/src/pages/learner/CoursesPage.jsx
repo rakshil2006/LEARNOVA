@@ -48,12 +48,17 @@ function CourseCard({ course, onAction }) {
           className="course-card-img"
           loading="lazy"
           style={{ display: "block" }}
+          onError={(e) => {
+            e.currentTarget.style.display = "none";
+            e.currentTarget.nextSibling.style.display = "flex";
+          }}
         />
-      ) : (
-        <div className="course-card-img">
-          <i className="fas fa-book-open" />
-        </div>
-      )}
+      ) : null}
+      <div
+        className="course-card-img"
+        style={{ display: course.cover_image_url ? "none" : "flex" }}>
+        <i className="fas fa-book-open" />
+      </div>
       <div className="course-card-body">
         <div className="course-card-title">{course.title}</div>
         {course.short_description && (

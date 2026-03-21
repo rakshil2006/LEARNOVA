@@ -1041,7 +1041,12 @@ export default function CourseFormPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const payload = { ...form, tags: form.tags };
+      const payload = {
+        ...form,
+        tags: form.tags,
+        price: form.price !== "" && form.price != null ? form.price : null,
+        course_admin_id: form.course_admin_id || null,
+      };
       if (coverFile) await uploadCover(id, coverFile);
       await updateCourse(id, payload);
       toast.success("Course saved");

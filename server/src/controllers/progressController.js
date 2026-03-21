@@ -18,8 +18,8 @@ async function recalculateCourseStatus(userId, courseId, dbClient) {
 
   await client.query(
     `UPDATE enrollments
-     SET status = $1,
-         started_at = CASE WHEN started_at IS NULL AND $1 != 'yet_to_start' THEN NOW() ELSE started_at END
+     SET status = $1::varchar,
+         started_at = CASE WHEN started_at IS NULL AND $1::varchar != 'yet_to_start' THEN NOW() ELSE started_at END
      WHERE user_id = $2 AND course_id = $3 AND status != 'completed'`,
     [newStatus, userId, courseId],
   );
@@ -113,7 +113,28 @@ exports.submitQuizAttempt = async (req, res) => {
     if (!quizRes.rows.length)
       return res.status(404).json({ error: "Quiz not found" });
     const quiz = quizRes.rows[0];
-    const cId = courseId || quiz.course_id;
+    const cId = parseInt(courseId) || quiz.course_id;
+
+    // Auto-enroll for open/invitation courses if not already enrolled
+    const enrollCheck = await db.query(
+      "SELECT id FROM enrollments WHERE user_id=$1 AND course_id=$2",
+      [userId, cId],
+    );
+    if (!enrollCheck.rows.length) {
+      const courseRes = await db.query(
+        "SELECT access_rule FROM courses WHERE id=$1",
+        [cId],
+      );
+      const rule = courseRes.rows[0]?.access_rule;
+      if (rule === "open" || rule === "invitation") {
+        await db.query(
+          `INSERT INTO enrollments (user_id, course_id, status) VALUES ($1,$2,'yet_to_start') ON CONFLICT DO NOTHING`,
+          [userId, cId],
+        );
+      } else {
+        return res.status(403).json({ error: "Not enrolled in this course" });
+      }
+    }
 
     const attemptsRes = await db.query(
       "SELECT COUNT(*) AS cnt FROM quiz_attempts WHERE user_id=$1 AND quiz_id=$2",
@@ -147,9 +168,12 @@ exports.submitQuizAttempt = async (req, res) => {
     const attempt = attemptRes.rows[0];
 
     if (answers && answers.length) {
-      for (const ans of answers) {
+      const validAnswers = answers.filter(
+        (ans) => ans.question_id != null && ans.selected_option_id != null,
+      );
+      for (const ans of validAnswers) {
         await db.query(
-          "INSERT INTO quiz_attempt_answers (attempt_id, question_id, selected_option_id) VALUES ($1,$2,$3)",
+          "INSERT INTO quiz_attempt_answers (attempt_id, question_id, selected_option_id) VALUES ($1,$2,$3) ON CONFLICT (attempt_id, question_id) DO UPDATE SET selected_option_id=EXCLUDED.selected_option_id",
           [attempt.id, ans.question_id, ans.selected_option_id],
         );
       }

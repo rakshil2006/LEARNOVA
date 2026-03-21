@@ -3,12 +3,7 @@ const qc = require("../controllers/quizController");
 const { authMiddleware } = require("../middleware/authMiddleware");
 const roleMiddleware = require("../middleware/roleMiddleware");
 
-router.get(
-  "/",
-  authMiddleware,
-  roleMiddleware("admin", "instructor"),
-  qc.getQuizzes,
-);
+router.get("/", authMiddleware, qc.getQuizzes);
 router.post(
   "/",
   authMiddleware,
