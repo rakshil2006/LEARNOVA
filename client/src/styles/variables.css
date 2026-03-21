@@ -1,0 +1,56 @@
+:root {
+  /* Primary — Odoo Purple */
+  --o-primary: #714b67;
+  --o-primary-dark: #56364d;
+  --o-primary-light: #875c7e;
+  --o-primary-subtle: #f3eef1;
+
+  /* Secondary — Odoo Teal/Info */
+  --o-info: #017e84;
+  --o-info-light: #e6f4f5;
+
+  /* Status Colors */
+  --o-success: #28a745;
+  --o-success-light: #eaf6ec;
+  --o-warning: #f0ad4e;
+  --o-warning-light: #fef8ee;
+  --o-danger: #d9534f;
+  --o-danger-light: #fdf2f2;
+
+  /* Neutrals — Odoo Grays */
+  --o-gray-100: #f8f9fa;
+  --o-gray-200: #e9ecef;
+  --o-gray-300: #dee2e6;
+  --o-gray-400: #ced4da;
+  --o-gray-500: #adb5bd;
+  --o-gray-600: #6c757d;
+  --o-gray-700: #495057;
+  --o-gray-800: #343a40;
+  --o-gray-900: #212529;
+
+  /* Backgrounds */
+  --o-bg-body: #f8f9fa;
+  --o-bg-view: #ffffff;
+  --o-bg-sidebar: #ffffff;
+  --o-bg-topbar: #ffffff;
+
+  /* Text */
+  --o-text-primary: #212529;
+  --o-text-secondary: #6c757d;
+  --o-text-muted: #adb5bd;
+
+  /* Borders */
+  --o-border: #dee2e6;
+  --o-border-subtle: #e9ecef;
+
+  /* Shadows */
+  --o-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --o-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --o-shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.12);
+
+  /* Misc */
+  --o-radius-sm: 4px;
+  --o-radius: 6px;
+  --o-radius-lg: 8px;
+  --o-transition: 0.15s ease-in-out;
+}

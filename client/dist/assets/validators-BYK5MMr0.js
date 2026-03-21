@@ -1,0 +1,1 @@
+function e(t){return/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t)}function n(t){return t.length>=8&&/[A-Z]/.test(t)&&/[0-9]/.test(t)}function a(t){return t&&t.trim().length>=2&&t.trim().length<=150}export{a,n as b,e as v};

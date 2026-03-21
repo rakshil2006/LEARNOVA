@@ -1,0 +1,1 @@
+const e=[{name:"Newbie",minPoints:0,icon:"🌱"},{name:"Explorer",minPoints:20,icon:"🧭"},{name:"Achiever",minPoints:40,icon:"🎯"},{name:"Specialist",minPoints:60,icon:"🔧"},{name:"Expert",minPoints:80,icon:"💡"},{name:"Master",minPoints:100,icon:"🏆"}];function t(n){return[...e].reverse().find(i=>n>=i.minPoints)}function o(n){return e.find(i=>i.minPoints>n)||null}export{o as a,t as g};
