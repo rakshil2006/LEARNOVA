@@ -5,9 +5,11 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash  VARCHAR(255)  NOT NULL,
   role           VARCHAR(20)   NOT NULL CHECK (role IN ('admin', 'instructor', 'learner')),
   avatar_url     TEXT,
-  total_points   INTEGER       NOT NULL DEFAULT 0 CHECK (total_points >= 0),
-  created_at     TIMESTAMP     NOT NULL DEFAULT NOW(),
-  updated_at     TIMESTAMP     NOT NULL DEFAULT NOW(),
+  total_points          INTEGER       NOT NULL DEFAULT 0 CHECK (total_points >= 0),
+  security_question     VARCHAR(255),
+  security_answer_hash  VARCHAR(255),
+  created_at            TIMESTAMP     NOT NULL DEFAULT NOW(),
+  updated_at            TIMESTAMP     NOT NULL DEFAULT NOW(),
   CONSTRAINT uq_users_email UNIQUE (email)
 );
 

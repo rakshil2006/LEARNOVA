@@ -17,6 +17,8 @@ export default function SignupPage() {
     password: "",
     confirmPassword: "",
     role: "learner",
+    security_question: "",
+    security_answer: "",
   });
   const [errors, setErrors] = useState({});
   const [showPw, setShowPw] = useState(false);
@@ -32,6 +34,10 @@ export default function SignupPage() {
     if (form.password !== form.confirmPassword)
       e.confirmPassword = "Passwords do not match";
     if (!form.role) e.role = "Please select a role";
+    if (!form.security_question)
+      e.security_question = "Please select a security question";
+    if (!form.security_answer.trim())
+      e.security_answer = "Security answer is required";
     setErrors(e);
     return !Object.keys(e).length;
   };
@@ -47,6 +53,8 @@ export default function SignupPage() {
         email: form.email,
         password: form.password,
         role: form.role,
+        security_question: form.security_question,
+        security_answer: form.security_answer,
       });
       toast.success("Account created! Please log in.");
       navigate("/login");
@@ -156,6 +164,52 @@ export default function SignupPage() {
               <option value="instructor">Instructor</option>
             </select>
             {errors.role && <span className="form-error">{errors.role}</span>}
+          </div>
+          <div className="form-group">
+            <label className="form-label">
+              Security Question <span className="required">*</span>
+            </label>
+            <select
+              className={`o-select ${errors.security_question ? "error" : ""}`}
+              {...f("security_question")}>
+              <option value="">— Select a question —</option>
+              <option value="What was the name of your first pet?">
+                What was the name of your first pet?
+              </option>
+              <option value="What is your mother's maiden name?">
+                What is your mother's maiden name?
+              </option>
+              <option value="What city were you born in?">
+                What city were you born in?
+              </option>
+              <option value="What was the name of your primary school?">
+                What was the name of your primary school?
+              </option>
+              <option value="What is your oldest sibling's middle name?">
+                What is your oldest sibling's middle name?
+              </option>
+              <option value="What was the make of your first car?">
+                What was the make of your first car?
+              </option>
+            </select>
+            {errors.security_question && (
+              <span className="form-error">{errors.security_question}</span>
+            )}
+          </div>
+          <div className="form-group">
+            <label className="form-label">
+              Security Answer <span className="required">*</span>
+            </label>
+            <input
+              type="text"
+              className={`o-input ${errors.security_answer ? "error" : ""}`}
+              {...f("security_answer")}
+              placeholder="Your answer (case-insensitive)"
+              autoComplete="off"
+            />
+            {errors.security_answer && (
+              <span className="form-error">{errors.security_answer}</span>
+            )}
           </div>
           <button
             type="submit"

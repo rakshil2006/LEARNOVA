@@ -4,6 +4,7 @@ import { login as loginApi } from "../../api/authApi";
 import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../hooks/useToast";
 import { validateEmail } from "../../utils/validators";
+import ForgotPasswordModal from "../../components/common/ForgotPasswordModal";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -17,6 +18,7 @@ export default function LoginPage() {
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState("");
+  const [showForgot, setShowForgot] = useState(false);
 
   const validate = () => {
     const e = {};
@@ -109,7 +111,12 @@ export default function LoginPage() {
             )}
           </div>
           <div style={{ textAlign: "right", marginBottom: 16 }}>
-            <span className="forgot-link">Forgot password?</span>
+            <span
+              className="forgot-link"
+              style={{ cursor: "pointer" }}
+              onClick={() => setShowForgot(true)}>
+              Forgot password?
+            </span>
           </div>
           <button
             type="submit"
@@ -130,6 +137,9 @@ export default function LoginPage() {
           Don't have an account? <Link to="/signup">Sign up</Link>
         </p>
       </div>
+      {showForgot && (
+        <ForgotPasswordModal onClose={() => setShowForgot(false)} />
+      )}
     </div>
   );
 }
