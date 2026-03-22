@@ -3,8 +3,7 @@ import { Link } from "react-router-dom";
 import Navbar from "../../components/common/Navbar";
 import Footer from "../../components/common/Footer";
 import { getPublicStats, getPublicCourses } from "../../api/courseApi";
-
-const BASE = "http://localhost:5000";
+import { resolveMediaUrl } from "../../utils/formatters";
 
 /* ── tiny hook: count-up animation ── */
 function useCountUp(target, duration = 1800) {
@@ -642,9 +641,7 @@ export default function LandingPage() {
                 ))
               : courses.map((c) => {
                   const img = c.cover_image_url
-                    ? c.cover_image_url.startsWith("http")
-                      ? c.cover_image_url
-                      : `${BASE}${c.cover_image_url}`
+                    ? resolveMediaUrl(c.cover_image_url)
                     : null;
                   return (
                     <Link

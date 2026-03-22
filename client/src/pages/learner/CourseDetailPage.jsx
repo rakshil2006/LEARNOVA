@@ -13,7 +13,11 @@ import {
   updateReview,
   purchaseCourse,
 } from "../../api/courseApi";
-import { formatDate, formatDuration } from "../../utils/formatters";
+import {
+  formatDate,
+  formatDuration,
+  resolveMediaUrl,
+} from "../../utils/formatters";
 
 const LESSON_ICONS = {
   video: "fa-play-circle",
@@ -201,11 +205,7 @@ export default function CourseDetailPage() {
           <div style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
             {course.cover_image_url && (
               <img
-                src={
-                  course.cover_image_url.startsWith("http")
-                    ? course.cover_image_url
-                    : `http://localhost:5000${course.cover_image_url}`
-                }
+                src={resolveMediaUrl(course.cover_image_url)}
                 alt={course.title}
                 style={{
                   width: 160,

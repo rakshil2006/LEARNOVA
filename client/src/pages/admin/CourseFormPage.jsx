@@ -17,7 +17,7 @@ import {
 import { getLessons, deleteLesson } from "../../api/lessonApi";
 import { getQuizzes, createQuiz, deleteQuiz } from "../../api/quizApi";
 import { getUsers } from "../../api/userApi";
-import { formatDuration } from "../../utils/formatters";
+import { formatDuration, resolveMediaUrl } from "../../utils/formatters";
 
 const LESSON_ICONS = {
   video: "fa-play-circle",
@@ -367,11 +367,7 @@ export default function CourseFormPage() {
               />
               {course?.cover_image_url && (
                 <img
-                  src={
-                    course.cover_image_url.startsWith("http")
-                      ? course.cover_image_url
-                      : `http://localhost:5000${course.cover_image_url}`
-                  }
+                  src={resolveMediaUrl(course.cover_image_url)}
                   alt="cover"
                   style={{ height: 40, marginTop: 4, borderRadius: 4 }}
                 />

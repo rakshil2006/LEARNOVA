@@ -9,7 +9,7 @@ import {
   completeCourse,
 } from "../../api/progressApi";
 import { getQuiz, getQuizzes } from "../../api/quizApi";
-import { formatDuration } from "../../utils/formatters";
+import { formatDuration, resolveMediaUrl } from "../../utils/formatters";
 import { getBadge, getNextBadge } from "../../utils/constants";
 import Modal from "../../components/common/Modal";
 import ProgressBar from "../../components/common/ProgressBar";
@@ -48,7 +48,7 @@ function getEmbedUrl(url) {
   return url;
 }
 
-function QuizPlayer({ lesson, courseId, onComplete }) {
+function QuizPlayer({ lesson, courseId, onComplete, onNext }) {
   const toast = useToast();
   const { user } = useAuth();
   const [quiz, setQuiz] = useState(null);
@@ -346,9 +346,18 @@ function QuizPlayer({ lesson, courseId, onComplete }) {
             onClick={() => setPhase("intro")}>
             Retake Quiz
           </button>
-          <button className="btn btn-primary" onClick={() => setPhase("intro")}>
-            Close
-          </button>
+          {onNext && (
+            <button className="btn btn-primary" onClick={onNext}>
+              Next Lesson <i className="fas fa-arrow-right" />
+            </button>
+          )}
+          {!onNext && (
+            <button
+              className="btn btn-primary"
+              onClick={() => setPhase("intro")}>
+              Close
+            </button>
+          )}
         </div>
       </div>
     );
@@ -493,9 +502,10 @@ export default function LessonPlayerPage() {
       setConfetti(true);
       setShowCompleteModal(true);
       setTimeout(() => {
+        setConfetti(false);
         setShowCompleteModal(false);
         navigate(`/courses/${courseId}`);
-      }, 3000);
+      }, 3500);
     } catch {
       toast.error("Could not mark course complete. Please try again.");
     } finally {
@@ -837,7 +847,7 @@ export default function LessonPlayerPage() {
                       {currentLesson.file_url.split("/").pop()}
                     </p>
                     <a
-                      href={`http://localhost:5000${currentLesson.file_url}`}
+                      href={resolveMediaUrl(currentLesson.file_url)}
                       target="_blank"
                       rel="noreferrer"
                       className="btn btn-primary">
@@ -845,7 +855,7 @@ export default function LessonPlayerPage() {
                     </a>
                     {currentLesson.allow_download && (
                       <a
-                        href={`http://localhost:5000${currentLesson.file_url}`}
+                        href={resolveMediaUrl(currentLesson.file_url)}
                         download
                         className="btn btn-secondary"
                         style={{ marginLeft: 8 }}>
@@ -868,7 +878,7 @@ export default function LessonPlayerPage() {
               <div style={{ textAlign: "center" }}>
                 {currentLesson.file_url ? (
                   <img
-                    src={`http://localhost:5000${currentLesson.file_url}`}
+                    src={resolveMediaUrl(currentLesson.file_url)}
                     alt={currentLesson.title}
                     style={{
                       maxWidth: "100%",
@@ -888,7 +898,7 @@ export default function LessonPlayerPage() {
                 {currentLesson.allow_download && currentLesson.file_url && (
                   <div style={{ marginTop: 12 }}>
                     <a
-                      href={`http://localhost:5000${currentLesson.file_url}`}
+                      href={resolveMediaUrl(currentLesson.file_url)}
                       download
                       className="btn btn-secondary btn-sm">
                       <i className="fas fa-download" /> Download
@@ -903,6 +913,7 @@ export default function LessonPlayerPage() {
                 lesson={currentLesson}
                 courseId={courseId}
                 onComplete={handleQuizComplete}
+                onNext={nextLesson ? () => navigateLesson(nextLesson) : null}
               />
             )}
 

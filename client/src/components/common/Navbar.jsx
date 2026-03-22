@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { getInitials } from "../../utils/formatters";
@@ -7,12 +7,24 @@ export default function Navbar({ variant = "public" }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
   const handleLogout = async () => {
     await logout();
     navigate("/");
   };
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [menuOpen]);
 
   return (
     <nav className="o-topbar">
@@ -71,7 +83,7 @@ export default function Navbar({ variant = "public" }) {
             </Link>
           </>
         ) : (
-          <div className="dropdown">
+          <div className="dropdown" ref={dropdownRef}>
             <button
               className="btn btn-secondary btn-sm"
               onClick={() => setMenuOpen(!menuOpen)}

@@ -7,15 +7,13 @@ import { useToast } from "../../hooks/useToast";
 import { useDebounce } from "../../hooks/useDebounce";
 import { useRecommendations } from "../../hooks/useRecommendations";
 import { getPublicCourses, purchaseCourse } from "../../api/courseApi";
-import { formatDuration, getInitials } from "../../utils/formatters";
+import {
+  formatDuration,
+  getInitials,
+  resolveMediaUrl,
+} from "../../utils/formatters";
 import { getBadge, getNextBadge } from "../../utils/constants";
 import Modal from "../../components/common/Modal";
-
-function imgUrl(url) {
-  if (!url) return null;
-  if (url.startsWith("http")) return url;
-  return `http://localhost:5000${url}`;
-}
 
 function CourseCard({ course, onAction }) {
   const { user } = useAuth();
@@ -44,7 +42,7 @@ function CourseCard({ course, onAction }) {
     <div className="course-card">
       {course.cover_image_url ? (
         <img
-          src={imgUrl(course.cover_image_url)}
+          src={resolveMediaUrl(course.cover_image_url)}
           alt={course.title}
           className="course-card-img"
           loading="lazy"

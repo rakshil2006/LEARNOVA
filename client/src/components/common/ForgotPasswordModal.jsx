@@ -5,9 +5,8 @@ import {
 } from "../../api/authApi";
 import { validateEmail, validatePassword } from "../../utils/validators";
 
-// step: 'email' | 'answer' | 'done'
 export default function ForgotPasswordModal({ onClose }) {
-  const [step, setStep] = useState("email");
+  const [step, setStep] = useState("email"); // 'email' | 'answer' | 'done'
   const [email, setEmail] = useState("");
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
@@ -26,7 +25,7 @@ export default function ForgotPasswordModal({ onClose }) {
       setQuestion(res.data.security_question);
       setStep("answer");
     } catch (err) {
-      setError(err.response?.data?.error || "Could not find account");
+      setError(err.response?.data?.error || "No account found with that email");
     } finally {
       setLoading(false);
     }
@@ -37,7 +36,7 @@ export default function ForgotPasswordModal({ onClose }) {
     setError("");
     if (!answer.trim()) return setError("Please enter your answer");
     if (!validatePassword(newPassword))
-      return setError("Password: min 8 chars, 1 uppercase, 1 number");
+      return setError("Password must be min 8 chars, 1 uppercase, 1 number");
     setLoading(true);
     try {
       await resetPasswordWithAnswer({
@@ -54,37 +53,31 @@ export default function ForgotPasswordModal({ onClose }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="o-dialog-backdrop" onClick={onClose}>
       <div
-        className="modal-box"
+        className="o-dialog"
         style={{ maxWidth: 420 }}
         onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h3 className="modal-title">
-            {step === "done" ? "Password Reset" : "Forgot Password"}
-          </h3>
+        <div className="o-dialog-header">
+          <span>{step === "done" ? "Password Reset" : "Forgot Password"}</span>
           <button className="btn-icon" onClick={onClose} aria-label="Close">
             <i className="fas fa-times" />
           </button>
         </div>
 
-        <div className="modal-body">
+        <div className="o-dialog-body">
           {step === "email" && (
             <form onSubmit={handleEmailSubmit} noValidate>
               <p
                 style={{
                   marginBottom: 16,
-                  color: "var(--text-secondary)",
-                  fontSize: 14,
+                  color: "var(--o-text-secondary)",
+                  fontSize: "0.929rem",
                 }}>
-                Enter your registered email and we'll ask your security
+                Enter your registered email and we'll show your security
                 question.
               </p>
-              {error && (
-                <div className="auth-error" style={{ marginBottom: 12 }}>
-                  {error}
-                </div>
-              )}
+              {error && <div className="auth-error">{error}</div>}
               <div className="form-group">
                 <label className="form-label">Email</label>
                 <input
@@ -94,13 +87,14 @@ export default function ForgotPasswordModal({ onClose }) {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   autoFocus
+                  autoComplete="email"
                 />
               </div>
               <button
                 type="submit"
                 className="btn btn-primary w-full"
                 disabled={loading}
-                style={{ justifyContent: "center" }}>
+                style={{ justifyContent: "center", marginTop: 4 }}>
                 {loading ? (
                   <>
                     <i className="fas fa-spinner fa-spin" /> Checking...
@@ -114,24 +108,20 @@ export default function ForgotPasswordModal({ onClose }) {
 
           {step === "answer" && (
             <form onSubmit={handleReset} noValidate>
-              {error && (
-                <div className="auth-error" style={{ marginBottom: 12 }}>
-                  {error}
-                </div>
-              )}
+              {error && <div className="auth-error">{error}</div>}
               <div className="form-group">
                 <label className="form-label">Security Question</label>
-                <p
+                <div
                   style={{
                     padding: "10px 12px",
-                    background: "var(--bg-secondary, #f5f5f5)",
-                    borderRadius: 8,
-                    fontSize: 14,
-                    color: "var(--text-primary)",
-                    margin: 0,
+                    background: "var(--o-gray-100)",
+                    border: "1px solid var(--o-border)",
+                    borderRadius: "var(--o-radius-sm)",
+                    fontSize: "0.929rem",
+                    color: "var(--o-text-primary)",
                   }}>
                   {question}
-                </p>
+                </div>
               </div>
               <div className="form-group">
                 <label className="form-label">Your Answer</label>
@@ -154,7 +144,7 @@ export default function ForgotPasswordModal({ onClose }) {
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="Min 8 chars, 1 uppercase, 1 number"
-                    style={{ paddingRight: 36 }}
+                    style={{ paddingRight: 40 }}
                   />
                   <button
                     type="button"
@@ -166,40 +156,58 @@ export default function ForgotPasswordModal({ onClose }) {
                       top: "50%",
                       transform: "translateY(-50%)",
                     }}
-                    aria-label="Toggle password">
+                    aria-label="Toggle password visibility">
                     <i
                       className={`fas ${showPw ? "fa-eye-slash" : "fa-eye"}`}
                     />
                   </button>
                 </div>
               </div>
-              <button
-                type="submit"
-                className="btn btn-primary w-full"
-                disabled={loading}
-                style={{ justifyContent: "center" }}>
-                {loading ? (
-                  <>
-                    <i className="fas fa-spinner fa-spin" /> Resetting...
-                  </>
-                ) : (
-                  "Reset Password"
-                )}
-              </button>
+              <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    setStep("email");
+                    setError("");
+                  }}
+                  style={{ flex: 1, justifyContent: "center" }}>
+                  Back
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={loading}
+                  style={{ flex: 2, justifyContent: "center" }}>
+                  {loading ? (
+                    <>
+                      <i className="fas fa-spinner fa-spin" /> Resetting...
+                    </>
+                  ) : (
+                    "Reset Password"
+                  )}
+                </button>
+              </div>
             </form>
           )}
 
           {step === "done" && (
-            <div style={{ textAlign: "center", padding: "16px 0" }}>
+            <div style={{ textAlign: "center", padding: "8px 0 16px" }}>
               <i
                 className="fas fa-check-circle"
                 style={{
-                  fontSize: 48,
-                  color: "var(--success, #22c55e)",
+                  fontSize: 52,
+                  color: "var(--o-success)",
                   marginBottom: 16,
+                  display: "block",
                 }}
               />
-              <p style={{ marginBottom: 20, color: "var(--text-secondary)" }}>
+              <p
+                style={{
+                  marginBottom: 24,
+                  color: "var(--o-text-secondary)",
+                  fontSize: "0.929rem",
+                }}>
                 Your password has been reset successfully. You can now log in
                 with your new password.
               </p>
