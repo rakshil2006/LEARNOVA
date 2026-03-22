@@ -417,8 +417,6 @@ exports.getPublicCourse = async (req, res) => {
   }
 };
 
-const db = require("../config/db");
-
 exports.enrollCourse = async (req, res) => {
   try {
     const courseRes = await db.query("SELECT * FROM courses WHERE id=$1", [
