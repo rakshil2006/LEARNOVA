@@ -4,7 +4,7 @@ const fs = require("fs");
 const out = [];
 const w = (s) => out.push(s);
 
-const PW = "$2b$12$eW5MkNqYpNqYkNqYpNqYkOeW5MkNqYpNqYkNqYpNqYkNqYpNqYk2";
+const PW = "$2b$12$QrkQuNKno8dx98EyUwMDe.lcEXGp0971Hhgyf2bVOhhBxGBL8qmbW";
 const SQ = "What was the name of your first pet?";
 const SAH = "$2b$12$mvSxmiayOpy6kiYilfWZFu2D8EFHnHoVgd5V2mtzDBqITl1wKT05i";
 
