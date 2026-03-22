@@ -139,7 +139,7 @@ function QuizPlayer({ lesson, courseId, onComplete }) {
             marginBottom: 24,
             fontSize: "0.929rem",
           }}>
-          Multiple attempts allowed. Points are awarded based on attempt number.
+          Multiple attempts allowed. Score at least 60% to earn points.
         </p>
         {attemptCount > 0 && (
           <p style={{ color: "var(--o-text-secondary)", marginBottom: 16 }}>
@@ -254,13 +254,15 @@ function QuizPlayer({ lesson, courseId, onComplete }) {
   if (phase === "result" && result) {
     const badge = getBadge(result.total_points);
     const nextBadge = getNextBadge(result.total_points);
-    const pct = nextBadge
+    const badgePct = nextBadge
       ? Math.round(
           ((result.total_points - badge.minPoints) /
             (nextBadge.minPoints - badge.minPoints)) *
             100,
         )
       : 100;
+    const passed = result.passed;
+    const scoreColor = passed ? "var(--o-success, #22c55e)" : "var(--o-danger)";
     return (
       <div
         style={{
@@ -269,13 +271,36 @@ function QuizPlayer({ lesson, courseId, onComplete }) {
           padding: 32,
           textAlign: "center",
         }}>
-        <div style={{ fontSize: "3rem", marginBottom: 8 }}>🎉</div>
-        <h2 style={{ marginBottom: 4 }}>
-          You earned {result.points_earned} points!
+        <div style={{ fontSize: "3rem", marginBottom: 8 }}>
+          {passed ? "🎉" : "😕"}
+        </div>
+        <h2 style={{ marginBottom: 4, color: scoreColor }}>
+          {result.score_pct}% — {passed ? "Passed!" : "Not passed"}
         </h2>
-        <p style={{ color: "var(--o-text-secondary)", marginBottom: 16 }}>
-          Attempt #{result.attempt_number}
+        <p style={{ color: "var(--o-text-secondary)", marginBottom: 4 }}>
+          {result.correct} / {result.total} correct · Attempt #
+          {result.attempt_number}
         </p>
+        {passed ? (
+          <p
+            style={{
+              color: "var(--o-text-secondary)",
+              marginBottom: 16,
+              fontSize: "0.929rem",
+            }}>
+            You earned <strong>{result.points_earned}</strong> points for
+            passing!
+          </p>
+        ) : (
+          <p
+            style={{
+              color: "var(--o-text-secondary)",
+              marginBottom: 16,
+              fontSize: "0.929rem",
+            }}>
+            Score at least 60% to earn points. Try again!
+          </p>
+        )}
         <div
           style={{
             background: "var(--o-primary-subtle)",
@@ -302,7 +327,7 @@ function QuizPlayer({ lesson, courseId, onComplete }) {
           )}
           {nextBadge && (
             <div style={{ marginTop: 8 }}>
-              <ProgressBar value={pct} />
+              <ProgressBar value={badgePct} />
               <div
                 style={{
                   fontSize: "0.786rem",

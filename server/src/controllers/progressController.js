@@ -143,23 +143,53 @@ exports.submitQuizAttempt = async (req, res) => {
     const attemptCount = parseInt(attemptsRes.rows[0].cnt);
     const newAttemptNumber = attemptCount + 1;
 
-    // Get points for this attempt
-    let rewardRow;
-    if (newAttemptNumber <= 3) {
-      const r = await db.query(
-        "SELECT * FROM quiz_rewards WHERE quiz_id=$1 AND attempt_number=$2",
-        [quizId, newAttemptNumber],
+    // Score the answers before inserting the attempt
+    const totalQRes = await db.query(
+      "SELECT COUNT(*) AS cnt FROM quiz_questions WHERE quiz_id=$1",
+      [quizId],
+    );
+    const totalQuestions = parseInt(totalQRes.rows[0].cnt) || 0;
+
+    // Count correct answers from submitted options
+    let correctCount = 0;
+    const validAnswers = (answers || []).filter(
+      (ans) => ans.question_id != null && ans.selected_option_id != null,
+    );
+    if (validAnswers.length > 0) {
+      const optionIds = validAnswers.map((a) => a.selected_option_id);
+      const correctRes = await db.query(
+        `SELECT COUNT(*) AS cnt FROM quiz_options
+         WHERE id = ANY($1::int[]) AND is_correct = TRUE`,
+        [optionIds],
       );
-      rewardRow = r.rows[0];
+      correctCount = parseInt(correctRes.rows[0].cnt) || 0;
     }
-    if (!rewardRow) {
-      const r = await db.query(
-        "SELECT * FROM quiz_rewards WHERE quiz_id=$1 AND attempt_number=0",
-        [quizId],
-      );
-      rewardRow = r.rows[0];
+    const scorePct =
+      totalQuestions > 0
+        ? Math.round((correctCount / totalQuestions) * 100)
+        : 0;
+    const passed = scorePct >= 60;
+
+    // Only award points if the learner passed (≥ 60% correct)
+    let pointsEarned = 0;
+    if (passed) {
+      let rewardRow;
+      if (newAttemptNumber <= 3) {
+        const r = await db.query(
+          "SELECT * FROM quiz_rewards WHERE quiz_id=$1 AND attempt_number=$2",
+          [quizId, newAttemptNumber],
+        );
+        rewardRow = r.rows[0];
+      }
+      if (!rewardRow) {
+        const r = await db.query(
+          "SELECT * FROM quiz_rewards WHERE quiz_id=$1 AND attempt_number=0",
+          [quizId],
+        );
+        rewardRow = r.rows[0];
+      }
+      pointsEarned = rewardRow ? rewardRow.points : 0;
     }
-    const pointsEarned = rewardRow ? rewardRow.points : 0;
 
     const attemptRes = await db.query(
       "INSERT INTO quiz_attempts (user_id, quiz_id, attempt_number, points_earned) VALUES ($1,$2,$3,$4) RETURNING *",
@@ -167,16 +197,11 @@ exports.submitQuizAttempt = async (req, res) => {
     );
     const attempt = attemptRes.rows[0];
 
-    if (answers && answers.length) {
-      const validAnswers = answers.filter(
-        (ans) => ans.question_id != null && ans.selected_option_id != null,
+    for (const ans of validAnswers) {
+      await db.query(
+        "INSERT INTO quiz_attempt_answers (attempt_id, question_id, selected_option_id) VALUES ($1,$2,$3) ON CONFLICT (attempt_id, question_id) DO UPDATE SET selected_option_id=EXCLUDED.selected_option_id",
+        [attempt.id, ans.question_id, ans.selected_option_id],
       );
-      for (const ans of validAnswers) {
-        await db.query(
-          "INSERT INTO quiz_attempt_answers (attempt_id, question_id, selected_option_id) VALUES ($1,$2,$3) ON CONFLICT (attempt_id, question_id) DO UPDATE SET selected_option_id=EXCLUDED.selected_option_id",
-          [attempt.id, ans.question_id, ans.selected_option_id],
-        );
-      }
     }
 
     await db.query(
@@ -213,32 +238,8 @@ exports.submitQuizAttempt = async (req, res) => {
 
     // ── Smart Practice Recommendation: upsert weak area (non-blocking) ──
     try {
-      // Step 1: score for this attempt
-      const totalQRes = await db.query(
-        "SELECT COUNT(*) AS cnt FROM quiz_questions WHERE quiz_id=$1",
-        [quizId],
-      );
-      const totalQuestions = parseInt(totalQRes.rows[0].cnt) || 0;
-
-      let scorePct = 0;
-      if (totalQuestions > 0) {
-        const correctRes = await db.query(
-          `SELECT COUNT(*) AS cnt
-           FROM quiz_attempt_answers qaa
-           JOIN quiz_options qo ON qo.id = qaa.selected_option_id
-           WHERE qaa.attempt_id = $1 AND qo.is_correct = TRUE`,
-          [attempt.id],
-        );
-        const correctCount = parseInt(correctRes.rows[0].cnt) || 0;
-        scorePct = Math.round((correctCount / totalQuestions) * 100);
-      }
-
-      // Step 2: avg across all attempts for this user+quiz
-      const allAttemptsRes = await db.query(
-        "SELECT COUNT(*) AS cnt FROM quiz_attempts WHERE user_id=$1 AND quiz_id=$2",
-        [userId, quizId],
-      );
-      const totalAttempts = parseInt(allAttemptsRes.rows[0].cnt) || 1;
+      // Use the score already calculated above
+      const totalAttempts = newAttemptNumber;
 
       const prevAvgRes = await db.query(
         "SELECT avg_score_pct FROM quiz_weak_areas WHERE user_id=$1 AND quiz_id=$2",
@@ -257,10 +258,8 @@ exports.submitQuizAttempt = async (req, res) => {
       }
       avgScorePct = Math.round(avgScorePct * 100) / 100;
 
-      // Step 3: is_weak
       const isWeak = totalAttempts >= 2 || avgScorePct < 60;
 
-      // Step 4: upsert
       await db.query(
         `INSERT INTO quiz_weak_areas (user_id, quiz_id, course_id, total_attempts, avg_score_pct, last_attempted, is_weak)
          VALUES ($1, $2, $3, $4, $5, NOW(), $6)
@@ -281,6 +280,10 @@ exports.submitQuizAttempt = async (req, res) => {
       points_earned: pointsEarned,
       total_points: totalPoints,
       completion_percent: pct,
+      score_pct: scorePct,
+      correct: correctCount,
+      total: totalQuestions,
+      passed,
     });
   } catch (err) {
     console.error(err);

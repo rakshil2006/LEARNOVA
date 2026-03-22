@@ -204,3 +204,19 @@ CREATE TABLE IF NOT EXISTS purchases (
 
 CREATE INDEX IF NOT EXISTS idx_purchases_user_id   ON purchases (user_id);
 CREATE INDEX IF NOT EXISTS idx_purchases_course_id ON purchases (course_id);
+
+CREATE TABLE IF NOT EXISTS quiz_weak_areas (
+  id             SERIAL        PRIMARY KEY,
+  user_id        INTEGER       NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+  quiz_id        INTEGER       NOT NULL REFERENCES quizzes (id) ON DELETE CASCADE,
+  course_id      INTEGER       NOT NULL REFERENCES courses (id) ON DELETE CASCADE,
+  total_attempts INTEGER       NOT NULL DEFAULT 1,
+  avg_score_pct  NUMERIC(5,2)  NOT NULL DEFAULT 0,
+  last_attempted TIMESTAMP     NOT NULL DEFAULT NOW(),
+  is_weak        BOOLEAN       NOT NULL DEFAULT FALSE,
+  CONSTRAINT uq_quiz_weak_areas_user_quiz UNIQUE (user_id, quiz_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_quiz_weak_areas_user_id   ON quiz_weak_areas (user_id);
+CREATE INDEX IF NOT EXISTS idx_quiz_weak_areas_quiz_id   ON quiz_weak_areas (quiz_id);
+CREATE INDEX IF NOT EXISTS idx_quiz_weak_areas_course_id ON quiz_weak_areas (course_id);
